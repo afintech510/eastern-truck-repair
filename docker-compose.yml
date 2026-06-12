@@ -1,0 +1,29 @@
+# Eastern Truck & Equipment Repair & Welding — Next.js site
+# Production deploy on the Hetzner VPS behind the SHARED dockerized `hampton_nginx`.
+# nginx reaches this app by container name over the external `hosthampton_hampton_net`
+# network (set $var http://easterntruck_web:3000; proxy_pass $var;). Cloudflare → nginx
+# (443, origin cert) → this container. The 127.0.0.1:3010 publish is localhost-only,
+# for on-VPS curl/debugging — it is NOT the public path.
+services:
+  web:
+    build: .
+    container_name: easterntruck_web
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      # SMTP transport for /api/lead lead emails. Set in the VPS .env (gitignored).
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - LEAD_FROM=${LEAD_FROM:-}
+      - LEAD_TO=${LEAD_TO:-}
+    ports:
+      - "127.0.0.1:3010:3000"
+    networks:
+      - hampton
+
+networks:
+  hampton:
+    external: true
+    name: hosthampton_hampton_net

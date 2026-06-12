@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+body { background:#10161d; color:#eef2f6; font-family:Inter,sans-serif; }
+.hazard { height:6px; background:repeating-linear-gradient(135deg,#ff7a00 0 22px,#10161d 22px 44px); }
+.skew { transform:skewX(-6deg); } .unskew { display:inline-block; transform:skewX(6deg); }
+.disp { font-family:"Saira Condensed",sans-serif; text-transform:uppercase; line-height:.98; }
+@media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
