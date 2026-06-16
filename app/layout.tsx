@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { LangProvider } from "@/components/Lang";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import BenchworksCredit from "@/components/BenchworksCredit";
 import { business } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Nav />
           {children}
           <Footer />
+          <BenchworksCredit />
         </LangProvider>
       </body>
     </html>
