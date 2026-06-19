@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import BenchworksCredit from "@/components/BenchworksCredit";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import JsonLd from "@/components/JsonLd";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { business } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LangProvider>
           <div className="hazard" />
           <Nav />
+          <Breadcrumbs />
           {children}
           <Footer />
           <BenchworksCredit />

@@ -14,6 +14,7 @@ export default function Nav() {
     { href: "/services", en: "Services", es: "Servicios" },
     { href: "/welding", en: "Welding", es: "Soldadura" },
     { href: "/about", en: "About", es: "Nosotros" },
+    { href: "/faq", en: "FAQ", es: "FAQ" },
     { href: "/contact", en: "Contact", es: "Contacto" },
   ];
   return (
