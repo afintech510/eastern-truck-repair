@@ -38,6 +38,35 @@ function loadConfig() {
   };
 }
 
+async function sendSms(payload: LeadPayload): Promise<void> {
+  const { TWILIO_SID, TWILIO_AUTH, TWILIO_FROM, SMS_TO } = process.env;
+  if (!TWILIO_SID || !TWILIO_AUTH || !TWILIO_FROM || !SMS_TO) return;
+
+  const recipients = SMS_TO.split(",").map((s) => s.trim()).filter(Boolean);
+  const body =
+    `New ${payload.formType} lead\n` +
+    `Name: ${payload.name}\n` +
+    `Phone: ${payload.phone}\n` +
+    (payload.service ? `Service: ${payload.service}\n` : "") +
+    (payload.message ? `Msg: ${payload.message.slice(0, 300)}\n` : "");
+
+  const auth = Buffer.from(`${TWILIO_SID}:${TWILIO_AUTH}`).toString("base64");
+  const url = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_SID}/Messages.json`;
+
+  await Promise.allSettled(
+    recipients.map((to) =>
+      fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({ From: TWILIO_FROM, To: to, Body: body }),
+      })
+    )
+  );
+}
+
 export async function sendLead(payload: LeadPayload): Promise<void> {
   const cfg = loadConfig();
 
@@ -88,4 +117,7 @@ export async function sendLead(payload: LeadPayload): Promise<void> {
     text,
     html,
   });
+
+  // SMS is fire-and-forget — a Twilio failure should never block the lead response.
+  sendSms(payload).catch((err) => console.error("[sendLead] SMS failed:", err));
 }
