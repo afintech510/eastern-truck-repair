@@ -28,6 +28,6 @@ jobs:
             docker compose up -d --build web
             docker image prune -f
             docker compose ps
-            curl -fsS --max-time 10 --retry 4 --retry-delay 3 --retry-connrefused http://127.0.0.1:3010/ >/dev/null \
-              && echo "health OK (:3010)" \
+            curl -fsS --max-time 10 --retry 4 --retry-delay 3 --retry-connrefused http://127.0.0.1:3010/api/health >/dev/null \
+              && echo "health OK (:3010/api/health)" \
               || echo "WARN: health check did not pass (deploy applied)"

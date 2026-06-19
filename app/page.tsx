@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { T } from "@/components/Lang";
 import { ServiceCard, CtaBand } from "@/components/UI";
+import Gallery from "@/components/Gallery";
 import { business, services } from "@/lib/data";
 import { Flame } from "lucide-react";
 
@@ -45,6 +46,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <Gallery />
 
       {/* ===== WELDING FEATURE BAND ===== */}
       <section className="border-y border-line relative overflow-hidden" style={{ background: "linear-gradient(135deg,#1a232e,#222d3a)" }}>

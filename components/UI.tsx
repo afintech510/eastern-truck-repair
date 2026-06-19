@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Truck, Settings, Flame, ClipboardCheck, Wrench, Siren, Phone, MapPin, Clock, Globe, Zap } from "lucide-react";
 import { useLang, T } from "./Lang";
+import { trackLeadConversion } from "./GoogleAnalytics";
 import { business, Service } from "@/lib/data";
 
 const icons: Record<string, any> = { Truck, Settings, Flame, ClipboardCheck, Wrench, Siren };
@@ -77,6 +78,7 @@ export function LeadForm({ kind }: { kind: "contact" | "quote" }) {
       });
       const data = await res.json().catch(() => ({ ok: false }));
       if (!res.ok || !data.ok) throw new Error("submit failed");
+      trackLeadConversion(kind);
       form.reset();
       setStatus("done");
       setTimeout(() => setStatus("idle"), 6000);
