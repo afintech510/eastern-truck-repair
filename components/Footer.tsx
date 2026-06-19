@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { T } from "./Lang";
 import { business, towns, townSlug } from "@/lib/data";
+import { serviceDetails } from "@/lib/serviceDetails";
+import { equipment } from "@/lib/equipmentData";
 
 export default function Footer() {
   return (
@@ -18,7 +20,7 @@ export default function Footer() {
         </div>
         <div>
           <h5 className="disp font-bold text-base uppercase tracking-wider mb-3"><T en="Menu" es="Menu" /></h5>
-          {[["/", "Home", "Inicio"],["/services","Services","Servicios"],["/welding","Welding","Soldadura"],["/about","About","Nosotros"],["/contact","Contact","Contacto"]].map(([h,en,es]) => (
+          {[["/", "Home", "Inicio"],["/services","Services","Servicios"],["/welding","Welding","Soldadura"],["/about","About","Nosotros"],["/contact","Contact","Contacto"],["/quote","Get a Quote","Pedir Cotizacion"],["/faq","FAQ","Preguntas"]].map(([h,en,es]) => (
             <Link key={h} href={h} className="block text-zinc-400 text-sm py-1 hover:text-safety"><T en={en} es={es} /></Link>
           ))}
         </div>
@@ -27,9 +29,37 @@ export default function Footer() {
           <a href={business.phoneHref} className="block text-zinc-400 text-sm py-1 hover:text-safety">{business.phone}</a>
           <span className="block text-zinc-400 text-sm py-1">{business.address}</span>
           <span className="block text-zinc-400 text-sm py-1">{business.city}, {business.state} {business.zip}</span>
+          <Link href="/sitemap.xml" className="block text-zinc-500 text-sm py-1 hover:text-safety mt-2"><T en="Sitemap" es="Mapa del sitio" /></Link>
         </div>
       </div>
-      {/* Service-area links — sitewide internal links into every town page (SEO discoverability). */}
+      <div className="border-t border-line">
+        <div className="max-w-6xl mx-auto px-5 pt-6 pb-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h5 className="disp font-bold text-sm uppercase tracking-wider mb-3 text-zinc-400">
+              <T en="Services" es="Servicios" />
+            </h5>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+              {serviceDetails.map((s) => (
+                <Link key={s.slug} href={`/services/${s.slug}`} className="text-[13px] text-zinc-500 hover:text-safety transition">
+                  <T en={s.title.en} es={s.title.es} />
+                </Link>
+              ))}
+            </div>
+          </div>
+          <div>
+            <h5 className="disp font-bold text-sm uppercase tracking-wider mb-3 text-zinc-400">
+              <T en="Equipment We Service" es="Equipo Que Reparamos" />
+            </h5>
+            <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+              {equipment.map((e) => (
+                <Link key={e.slug} href={`/equipment/${e.slug}`} className="text-[13px] text-zinc-500 hover:text-safety transition">
+                  <T en={e.title.en} es={e.title.es} />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
       <div className="border-t border-line">
         <div className="max-w-6xl mx-auto px-5 pt-6 pb-4">
           <h5 className="disp font-bold text-sm uppercase tracking-wider mb-3 text-zinc-400">
