@@ -20,7 +20,7 @@ export type LeadPayload = {
 export class LeadConfigError extends Error {}
 
 function loadConfig() {
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, LEAD_FROM, LEAD_TO } = process.env;
+  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, LEAD_FROM, LEAD_TO, LEAD_CC } = process.env;
   if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS || !LEAD_FROM || !LEAD_TO) {
     throw new LeadConfigError(
       "missing one of SMTP_HOST / SMTP_USER / SMTP_PASS / LEAD_FROM / LEAD_TO"
@@ -28,6 +28,7 @@ function loadConfig() {
   }
   const to = LEAD_TO.split(",").map((s) => s.trim()).filter(Boolean);
   if (to.length === 0) throw new LeadConfigError("LEAD_TO has no recipients");
+  const cc = (LEAD_CC ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   return {
     host: SMTP_HOST,
     port: Number(SMTP_PORT) || 587,
@@ -35,6 +36,7 @@ function loadConfig() {
     pass: SMTP_PASS,
     from: LEAD_FROM,
     to,
+    cc,
   };
 }
 
@@ -112,6 +114,7 @@ export async function sendLead(payload: LeadPayload): Promise<void> {
   await transporter.sendMail({
     from: cfg.from,
     to: cfg.to,
+    cc: cfg.cc.length > 0 ? cfg.cc : undefined,
     replyTo: payload.email && payload.email.trim() !== "" ? payload.email.trim() : undefined,
     subject: `New ${payload.formType} lead — ${payload.name}`,
     text,

@@ -21,6 +21,7 @@ services:
       - SMTP_PASS=${SMTP_PASS:-}
       - LEAD_FROM=${LEAD_FROM:-}
       - LEAD_TO=${LEAD_TO:-}
+      - LEAD_CC=${LEAD_CC:-}
       # Twilio SMS (optional — leads text out if set, email always sends first)
       - TWILIO_SID=${TWILIO_SID:-}
       - TWILIO_AUTH=${TWILIO_AUTH:-}
