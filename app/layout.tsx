@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     siteName: business.name,
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: business.name,
     description: `Truck & equipment repair and on-site welding across ${business.region}.`,
   },
