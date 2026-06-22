@@ -27,7 +27,7 @@ export default function Home() {
             <a href={business.phoneHref} className="skew border border-line hover:border-safety hover:text-safety px-7 py-3.5 rounded disp font-bold text-lg"><span className="unskew"><T en={`Call ${business.phone}`} es={`Llamar ${business.phone}`} /></span></a>
           </div>
           <div className="flex flex-wrap mt-14 border border-line rounded-md overflow-hidden max-w-[640px]">
-            {[["24/7","Emergency","Emergencia"],["NY","Inspections","Inspecciones"],["2","Languages","Idiomas"],["All","Makes & Models","Marcas"]].map(([b,en,es],i) => (
+            {[["Fast","Emergency","Emergencia"],["NY","Inspections","Inspecciones"],["2","Languages","Idiomas"],["All","Makes & Models","Marcas"]].map(([b,en,es],i) => (
               <div key={i} className="flex-1 min-w-[140px] px-5 py-4 border-r border-line last:border-r-0">
                 <b className="disp font-extrabold text-3xl text-safety block leading-none">{b}</b>
                 <small className="text-xs text-zinc-400 uppercase tracking-wide"><T en={en} es={es} /></small>
