@@ -1,12 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
-import { Truck, Settings, Flame, ClipboardCheck, Wrench, Siren, Phone, MapPin, Clock, Globe, Zap } from "lucide-react";
+import { Truck, Settings, Flame, ClipboardCheck, Wrench, Siren, Phone, MapPin, Clock, Globe, Zap, Gauge, Fuel } from "lucide-react";
 import { useLang, T } from "./Lang";
 import { trackLeadConversion } from "./GoogleAnalytics";
 import { business, Service } from "@/lib/data";
 
-const icons: Record<string, any> = { Truck, Settings, Flame, ClipboardCheck, Wrench, Siren };
+const icons: Record<string, any> = { Truck, Settings, Flame, ClipboardCheck, Wrench, Siren, Gauge, Fuel };
 
 export function Icon({ name, size = 26 }: { name: string; size?: number }) {
   const C = icons[name] || Wrench;

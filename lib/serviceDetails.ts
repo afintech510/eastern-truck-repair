@@ -115,6 +115,50 @@ export const serviceDetails: ServiceDetail[] = [
     ],
   },
   {
+    slug: "hydraulic-hose",
+    icon: "Gauge",
+    title: { en: "Hydraulic Hose Fabrication & Repair", es: "Fabricacion y Reparacion de Mangueras Hidraulicas" },
+    subtitle: { en: "Custom hose assemblies built same-day. High-pressure lines for trucks, excavators, and heavy equipment.", es: "Ensamblajes de manguera a medida el mismo dia. Lineas de alta presion para camiones, excavadoras y equipo pesado." },
+    intro: {
+      en: "A blown hydraulic hose shuts your machine down and your job site with it. We fabricate custom hydraulic hose assemblies in-house — matched to your exact pressure rating, temperature spec, and fitting size. From excavator boom lines running at 5,000 PSI to loader steering hoses, we cut, crimp, and test same-day so your iron gets back to work. We stock a range of hose sizes up to 2 inches, high-pressure fittings, quick disconnects, and adapters for construction equipment, dump trucks, ag machinery, vacuum trucks, and marine applications.",
+      es: "Una manguera hidraulica reventada detiene tu maquina y tu obra con ella. Fabricamos ensamblajes de manguera hidraulica a medida en taller — con la presion, temperatura y tamano de conexion exactos. Desde lineas de brazo de excavadora a 5,000 PSI hasta mangueras de direccion de cargador, cortamos, prensamos y probamos el mismo dia para que tu hierro vuelva al trabajo. Tenemos en stock mangueras de hasta 2 pulgadas, conexiones de alta presion, desconexion rapida y adaptadores para equipo de construccion, camiones de volteo, maquinaria agricola, camiones de vacio y aplicaciones marinas.",
+    },
+    process: [
+      { en: "Bring the old hose or give us the specs — length, pressure rating, fitting type, and application.", es: "Trae la manguera vieja o danos las especificaciones — largo, presion, tipo de conexion y aplicacion." },
+      { en: "We match the right hose and fittings to your pressure and temperature requirements.", es: "Seleccionamos la manguera y conexiones correctas para tus requisitos de presion y temperatura." },
+      { en: "Cut, crimp, and pressure-test the assembly in our shop.", es: "Cortamos, prensamos y probamos la presion del ensamblaje en nuestro taller." },
+      { en: "Pick it up same-day — or we can install it on-site.", es: "Recogelo el mismo dia — o podemos instalarlo en sitio." },
+    ],
+    faqs: [
+      { q: { en: "How fast can you make a hydraulic hose?", es: "¿Que tan rapido pueden hacer una manguera hidraulica?" }, a: { en: "Most custom hose assemblies are fabricated same-day. Bring in the old hose or your specs and we'll have you back on the job as fast as possible.", es: "La mayoria de los ensamblajes se fabrican el mismo dia. Trae la manguera vieja o tus especificaciones y te tendremos de vuelta al trabajo lo mas rapido posible." } },
+      { q: { en: "What pressure ratings do you support?", es: "¿Que presiones manejan?" }, a: { en: "We fabricate hoses rated up to 6,000 PSI for high-pressure hydraulic applications — excavators, loaders, cranes, dump trucks, and more. We match the hose, fittings, and crimp to the exact OEM or application spec.", es: "Fabricamos mangueras hasta 6,000 PSI para aplicaciones hidraulicas de alta presion — excavadoras, cargadores, gruas, camiones de volteo y mas. Ajustamos la manguera, conexiones y prensado a la especificacion OEM o de la aplicacion." } },
+      { q: { en: "Can you replace hydraulic hoses on-site?", es: "¿Pueden reemplazar mangueras hidraulicas en sitio?" }, a: { en: "Yes. If your equipment can't be moved, we can fabricate the hose in our shop and come to your job site to install it. We also carry common sizes on our mobile service rig for field replacements.", es: "Si. Si tu equipo no se puede mover, fabricamos la manguera en taller y vamos a tu obra a instalarla. Tambien llevamos tamanos comunes en nuestro equipo movil para reemplazos en campo." } },
+      { q: { en: "What types of equipment do you make hoses for?", es: "¿Para que tipos de equipo hacen mangueras?" }, a: { en: "Excavators, backhoes, wheel loaders, skid steers, dump trucks, vacuum trucks, cranes, forklifts, agricultural equipment, and marine hydraulic systems. If it runs on hydraulic pressure, we can build the hose for it.", es: "Excavadoras, retroexcavadoras, cargadores, minicargadores, camiones de volteo, camiones de vacio, gruas, montacargas, equipo agricola y sistemas hidraulicos marinos. Si funciona con presion hidraulica, podemos fabricar la manguera." } },
+    ],
+  },
+  {
+    slug: "diesel-emissions",
+    icon: "Fuel",
+    title: { en: "Diesel Emissions & DPF Service", es: "Emisiones Diesel y Servicio DPF" },
+    subtitle: { en: "DPF cleaning, DEF repair, EGR service. Avoid derate, avoid fines, stay running.", es: "Limpieza DPF, reparacion DEF, servicio EGR. Evita derate, evita multas, sigue trabajando." },
+    intro: {
+      en: "Every time that check engine light comes on and your truck goes into derate mode, you're losing money. Clogged DPF filters, failed regen cycles, DEF system faults, and worn EGR valves don't just slow you down — they can trigger fines exceeding $45,000 per non-compliant vehicle. We diagnose and service the full diesel aftertreatment system: DPF cleaning and forced regeneration, DEF dosing system diagnostics, SCR catalyst service, EGR valve replacement, sensor and wiring repair, and ECM resets. We get your truck out of derate and back on the road — compliant and running clean.",
+      es: "Cada vez que se enciende la luz de check engine y tu camion entra en modo derate, pierdes dinero. Filtros DPF tapados, ciclos de regeneracion fallidos, fallas del sistema DEF y valvulas EGR desgastadas no solo te frenan — pueden generar multas que superan $45,000 por vehiculo no conforme. Diagnosticamos y damos servicio al sistema completo de post-tratamiento diesel: limpieza DPF y regeneracion forzada, diagnostico del sistema de dosificacion DEF, servicio del catalizador SCR, reemplazo de valvula EGR, reparacion de sensores y cableado, y resets de ECM. Sacamos tu camion del derate y lo ponemos de vuelta en la carretera — conforme y funcionando limpio.",
+    },
+    process: [
+      { en: "Call with your symptoms — derate mode, regen failures, DEF warnings, or check engine codes.", es: "Llama con tus sintomas — modo derate, fallas de regeneracion, advertencias DEF o codigos de check engine." },
+      { en: "We pull codes and diagnose the aftertreatment system — DPF, DEF, EGR, SCR, and sensors.", es: "Leemos codigos y diagnosticamos el sistema de post-tratamiento — DPF, DEF, EGR, SCR y sensores." },
+      { en: "Clean, repair, or replace the failed components and reset the ECM.", es: "Limpiamos, reparamos o reemplazamos los componentes fallidos y reseteamos el ECM." },
+      { en: "Verify the system is out of derate, running clean, and road-ready.", es: "Verificamos que el sistema salio del derate, funciona limpio y esta listo para la carretera." },
+    ],
+    faqs: [
+      { q: { en: "What is DPF cleaning and how often does it need to be done?", es: "¿Que es la limpieza DPF y cada cuanto se necesita?" }, a: { en: "The Diesel Particulate Filter (DPF) traps soot from your exhaust. Over time it clogs — especially if your truck does a lot of stop-and-go or short runs that prevent full regeneration. We clean the DPF to restore exhaust flow and prevent forced regen failures. Most trucks need DPF service every 100,000-200,000 miles, but hard-working fleets often need it sooner.", es: "El Filtro de Particulas Diesel (DPF) atrapa hollin del escape. Con el tiempo se tapa — especialmente si tu camion hace mucho arranque y parada o recorridos cortos que impiden la regeneracion completa. Limpiamos el DPF para restaurar el flujo de escape y prevenir fallas de regeneracion. La mayoria de los camiones necesitan servicio DPF cada 100,000-200,000 millas, pero flotas de trabajo pesado a menudo lo necesitan antes." } },
+      { q: { en: "My truck is stuck in derate mode — can you fix it?", es: "¿Mi camion esta en modo derate — pueden arreglarlo?" }, a: { en: "Yes. Derate mode is usually triggered by a DPF, DEF, or EGR fault. We diagnose the root cause — whether it's a clogged filter, a bad DEF injector, a faulty NOx sensor, or an EGR valve issue — and fix it so your truck runs at full power again.", es: "Si. El modo derate generalmente es causado por una falla de DPF, DEF o EGR. Diagnosticamos la causa raiz — ya sea un filtro tapado, inyector DEF malo, sensor NOx defectuoso o problema de valvula EGR — y lo reparamos para que tu camion funcione a plena potencia otra vez." } },
+      { q: { en: "Do you service DEF systems?", es: "¿Dan servicio a sistemas DEF?" }, a: { en: "Yes. We diagnose and repair the full DEF (Diesel Exhaust Fluid) dosing system — DEF pump, injector, tank, lines, quality sensors, and NOx sensors. DEF system faults are one of the most common causes of derate mode in modern diesel trucks.", es: "Si. Diagnosticamos y reparamos el sistema completo de dosificacion DEF — bomba DEF, inyector, tanque, lineas, sensores de calidad y sensores NOx. Las fallas del sistema DEF son una de las causas mas comunes del modo derate en camiones diesel modernos." } },
+      { q: { en: "What brands of trucks do you service for emissions work?", es: "¿Que marcas de camiones atienden para trabajo de emisiones?" }, a: { en: "All major brands — Freightliner, Kenworth, Peterbilt, International, Volvo, Mack, Hino, and Isuzu. Cummins, Detroit Diesel, Paccar, and Navistar engines. The aftertreatment systems are similar across manufacturers, and we have the diagnostic tools to work on all of them.", es: "Todas las marcas principales — Freightliner, Kenworth, Peterbilt, International, Volvo, Mack, Hino e Isuzu. Motores Cummins, Detroit Diesel, Paccar y Navistar. Los sistemas de post-tratamiento son similares entre fabricantes, y tenemos las herramientas de diagnostico para trabajar en todos." } },
+    ],
+  },
+  {
     slug: "emergency",
     icon: "Siren",
     title: { en: "Emergency Service", es: "Servicio de Emergencia" },
