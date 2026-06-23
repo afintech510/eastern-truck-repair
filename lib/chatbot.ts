@@ -92,7 +92,7 @@ export async function chatWithBot(
   options?: ChatOptions,
 ): Promise<string> {
   const client = new Anthropic();
-  const model = process.env.CHATBOT_MODEL || "claude-sonnet-4-5-20250514";
+  const model = process.env.CHATBOT_MODEL || "claude-sonnet-4-6";
   const maxTokens = options?.sms ? 200 : 500;
 
   const response = await client.messages.create({
