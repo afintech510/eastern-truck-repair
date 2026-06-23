@@ -108,6 +108,8 @@ export function LeadForm({ kind }: { kind: "contact" | "quote" }) {
               <option>{lang === "es" ? "Reparacion de Camion" : "Truck Repair"}</option>
               <option>{lang === "es" ? "Reparacion de Equipo" : "Equipment Repair"}</option>
               <option>{lang === "es" ? "Soldadura en Sitio" : "On-Site Welding"}</option>
+              <option>{lang === "es" ? "Manguera Hidraulica" : "Hydraulic Hose Fabrication"}</option>
+              <option>{lang === "es" ? "Emisiones Diesel / DPF" : "Diesel Emissions / DPF"}</option>
               <option>{lang === "es" ? "Inspeccion NY" : "NY State Inspection"}</option>
               <option>{lang === "es" ? "Emergencia" : "Emergency Service"}</option>
               <option>{lang === "es" ? "Otro" : "Other"}</option>
@@ -134,7 +136,7 @@ export function LeadForm({ kind }: { kind: "contact" | "quote" }) {
             : <>Couldn&apos;t send. Please call us at <a className="underline font-bold" href={business.phoneHref}>{business.phone}</a>.</>}
         </div>
       )}
-      <style>{`.inp{width:100%;background:#10161d;border:1px solid #313e4d;border-radius:5px;padding:11px 13px;color:#eef2f6;font-size:15px}.inp:focus{outline:none;border-color:#ff7a00}`}</style>
+      <style>{`.inp{width:100%;background:#10161d;border:1px solid #313e4d;border-radius:5px;padding:11px 13px;color:#eef2f6;font-size:16px}.inp:focus{outline:none;border-color:#ff7a00}`}</style>
     </form>
   );
 }

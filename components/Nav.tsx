@@ -60,7 +60,7 @@ export default function Nav() {
           </div>
         </div>
 
-        <button className="md:hidden text-zinc-200" onClick={() => setOpen(!open)} aria-label="Menu">
+        <button className="md:hidden text-zinc-200 min-w-[44px] min-h-[44px] grid place-items-center" onClick={() => setOpen(!open)} aria-label="Menu">
           {open ? <X size={26} /> : <Menu size={26} />}
         </button>
       </div>

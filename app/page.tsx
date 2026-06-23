@@ -3,6 +3,7 @@ import Link from "next/link";
 import { T } from "@/components/Lang";
 import { ServiceCard, CtaBand } from "@/components/UI";
 import Gallery from "@/components/Gallery";
+import MapEmbed from "@/components/MapEmbed";
 import { business, services } from "@/lib/data";
 import { Flame } from "lucide-react";
 
@@ -77,6 +78,8 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <MapEmbed />
 
       <CtaBand />
     </>

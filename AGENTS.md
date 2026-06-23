@@ -33,9 +33,7 @@ Note: `nginx.conf.example` in this repo describes a host-nginx + `127.0.0.1:3000
 setup that does NOT match the live convention; the live setup is the shared
 dockerized nginx described above (see `DEPLOY-PROGRESS.md`).
 
-Live status: DNS A records (apex + www → `5.161.88.134`) were not yet added in
-Cloudflare as of the last deploy log, so the public site may not be live until DNS
-is configured. Verify before assuming it's reachable.
+The site is live at `https://www.easterntruckrepair.com` (DNS configured, Cloudflare proxied).
 
 ## Run locally
 ```bash
@@ -52,53 +50,47 @@ Local docker compose needs the external network `hosthampton_hampton_net` to exi
 (it lives on the VPS); on a laptop without it, run with `npm run dev` instead.
 
 ## Deploy
-Deploy is manual on the VPS — there is no CI/CD pipeline (no `.github/` workflows).
+**Auto-deploys on every push to `main`** via `.github/workflows/deploy.yml`.
 
-The repo now has a GitHub remote (`github.com/afintech510/eastern-truck-repair`).
-The sibling-project convention is `git pull --ff-only` + rebuild on the box, but the
-VPS checkout's remote/branch state is not confirmed here — verify with
-`ssh hampton-vps 'cd /opt/easterntruckrepair && git remote -v && git status'` first.
+Push → GH Actions SSHs to VPS → `git fetch && git reset --hard origin/main` →
+`docker compose up -d --build web` → health check (`/api/health`).
 
-If the VPS dir is a git checkout of this remote:
+GitHub remote: `github.com/afintech510/eastern-truck-repair`.
+
+Manual deploy (if GH Actions is broken):
 ```bash
 ssh hampton-vps 'cd /opt/easterntruckrepair && git pull --ff-only && docker compose up -d --build'
 ```
 
-Historical fallback (used before the remote existed — direct tarball push, per
-`DEPLOY-PROGRESS.md`):
-```bash
-tar --exclude=node_modules --exclude=.next --exclude=.git --exclude='*.tar.gz' \
-    --exclude=eastern-truck-repair.code-workspace -czf /tmp/etr.tar.gz .
-scp /tmp/etr.tar.gz hampton-vps:/opt/easterntruckrepair/
-ssh hampton-vps 'cd /opt/easterntruckrepair && tar -xzf etr.tar.gz && rm etr.tar.gz && docker compose up -d --build'
-```
-SMTP/LEAD env vars are runtime (not build-time), so changing only `.env` needs just
-`docker compose up -d` (no rebuild). After an nginx/cert change: `docker exec hampton_nginx nginx -s reload`.
+SMTP/LEAD/Twilio env vars are runtime (not build-time), so changing only `.env` needs
+just `docker compose up -d` (no rebuild). `NEXT_PUBLIC_GA_ID` is build-time — requires
+`--build`. After an nginx/cert change: `docker exec hampton_nginx nginx -s reload`.
 
 ## Database
 None. No database, no Supabase, no Prisma — all content is hard-coded in
 `lib/data.ts`. Leads are delivered by email only (no persistence).
 
 ## Environment & secrets
-Server-side only (never `NEXT_PUBLIC_*`). Defined in `.env.example`, consumed in
-`lib/sendLead.ts`, passed through `docker-compose.yml`. Real values live ONLY in the
-VPS `/opt/easterntruckrepair/.env` (gitignored) — never commit them.
+Defined in `.env.example`, consumed in `lib/sendLead.ts` and `components/GoogleAnalytics.tsx`,
+passed through `docker-compose.yml`. Real values live ONLY in the VPS
+`/opt/easterntruckrepair/.env` (gitignored) — **never commit secrets**.
 
-Variable NAMES (values not shown):
-- `SMTP_HOST`
-- `SMTP_PORT` (default 587; 465 = implicit TLS)
-- `SMTP_USER`
-- `SMTP_PASS`
-- `LEAD_FROM`
-- `LEAD_TO` (comma-separated recipients)
+**Server-side (runtime):**
+- `SMTP_HOST`, `SMTP_PORT` (587), `SMTP_USER`, `SMTP_PASS` — Gmail SMTP
+- `LEAD_FROM` — sender address
+- `LEAD_TO` — comma-separated primary recipients
+- `LEAD_CC` — comma-separated CC recipients (used to avoid Gmail self-send dedup)
+- `TWILIO_SID`, `TWILIO_AUTH`, `TWILIO_FROM`, `SMS_TO` — SMS lead notifications (optional, fire-and-forget)
 
-If any required one (`SMTP_HOST`/`SMTP_USER`/`SMTP_PASS`/`LEAD_FROM`/`LEAD_TO`) is
-unset, `/api/lead` returns 500 "email not configured" and the forms show the
-bilingual call-us fallback.
+**Build-time (must be Docker ARG, not just runtime ENV):**
+- `NEXT_PUBLIC_GA_ID` — GA4 Measurement ID (inlined by Next.js at build)
+
+If any required SMTP var is unset, `/api/lead` returns 500 "email not configured" and
+the forms show the bilingual call-us fallback. If Twilio vars are unset, SMS is
+silently skipped — email always sends first.
 
 Note: `DEPLOY-PROGRESS.md` mentions `NEXT_PUBLIC_FORM_ENDPOINT` and
-`N8N_WEBHOOK_URL` — these are from earlier iterations and are NOT used by the current
-code. The SMTP vars above are the live mechanism.
+`N8N_WEBHOOK_URL` — dead references from earlier iterations.
 
 ## Cron / scheduled jobs
 None.
@@ -117,29 +109,40 @@ None.
 
 ## Key files
 - `lib/data.ts` — business info, services, towns, per-town SEO content (edit content here).
-- `lib/sendLead.ts` — the swappable lead-delivery seam (Nodemailer/SMTP today).
+- `lib/sendLead.ts` — the swappable lead-delivery seam (Nodemailer/SMTP + Twilio SMS).
+- `lib/serviceDetails.ts` — per-service detail page content (6 services).
+- `lib/equipmentData.ts` — per-equipment-type page content (5 equipment types).
 - `app/api/lead/route.ts` — POST endpoint; honeypot, validation, 500/502 error contract.
+- `app/api/health/route.ts` — `GET /api/health` returns `{"status":"ok"}` (used by deploy workflow).
 - `app/[town]/page.tsx` — per-town SEO page generator.
+- `app/services/[slug]/page.tsx` — per-service detail pages.
+- `app/equipment/[slug]/page.tsx` — per-equipment-type pages.
+- `app/faq/page.tsx` — aggregated FAQ page (general + service + equipment).
 - `app/page.tsx`, `app/welding/page.tsx`, `app/services/page.tsx`, `app/about/page.tsx`,
   `app/contact/page.tsx`, `app/quote/page.tsx` — core pages.
-- `app/sitemap.ts`, `app/robots.ts` — SEO (hard-coded domain).
+- `app/sitemap.ts`, `app/robots.ts` — SEO (hard-coded domain, 38 URLs).
 - `components/Lang.tsx` — EN/ES language context; `Nav.tsx`, `Footer.tsx`, `UI.tsx`.
+- `components/GoogleAnalytics.tsx` — GA4 + conversion tracking.
+- `components/JsonLd.tsx` — AutoRepair structured data.
+- `components/Breadcrumbs.tsx` — client-side breadcrumb nav.
+- `components/BenchworksCredit.tsx` — builder attribution footer.
 - `Dockerfile`, `docker-compose.yml` — container build/run (shared-nginx convention).
+- `.github/workflows/deploy.yml` — auto-deploy on push to main.
 - `.env.example` — env var names + docs.
 - `nginx.conf.example` — stale example (host-nginx model); not the live setup.
-- `DEPLOY-PROGRESS.md` — detailed deploy history/state (some env-var references are outdated).
+- `DEPLOY-PROGRESS.md` — deploy history (some references are outdated).
 
-## Gotchas / next steps
+## Gotchas
 - `nginx.conf.example` does NOT match the live shared-dockerized-nginx convention; trust
-  `DEPLOY-PROGRESS.md` and `docker-compose.yml` for how it actually runs.
-- DEPLOY-PROGRESS references `NEXT_PUBLIC_FORM_ENDPOINT` / `N8N_WEBHOOK_URL` and "no GitHub
-  remote" — both are stale. Current: SMTP vars + a real GitHub remote.
-- NAP values in `lib/data.ts` are marked UNVERIFIED — confirm against the Google Business
-  Profile before public launch (phone `(631) 939-1397`, `91 N Phillips Ave, Speonk, NY 11972`).
-- Launch blocker: Cloudflare DNS A records (apex + www → `5.161.88.134`, Proxied) were not
-  yet added; site isn't public until they are. Keep CF SSL mode = Full (self-signed origin cert).
-- No tests and no CI — verify builds with `npm run build` before deploying.
-- Lead forms degrade to a bilingual call-us message until SMTP vars are set on the VPS.
-- TODO (from README): add real welding/fab job photos, AWS weld cert badge + NY inspection
-  license # when available.
-```
+  `docker-compose.yml` for how it actually runs.
+- DEPLOY-PROGRESS references `NEXT_PUBLIC_FORM_ENDPOINT` / `N8N_WEBHOOK_URL` — dead.
+- NAP values in `lib/data.ts` — confirm against Google Business Profile before launch
+  (phone `(631) 939-1397`, `91 N Phillips Ave, Speonk, NY 11972`).
+- `NEXT_PUBLIC_*` vars are BUILD-TIME in Next.js — if you change `NEXT_PUBLIC_GA_ID`,
+  you need `docker compose up -d --build web`, not just a restart.
+- Gmail self-send dedup: info@easterntruckrepair.com routes to the same Gmail as
+  the SMTP sender. LEAD_CC is used to deliver to that address; LEAD_TO goes to a
+  different mailbox (adam@easternbuilding.supply).
+- No test framework — `npm run build` is the only verification gate.
+- Lead forms degrade to a bilingual call-us message until SMTP vars are set.
+- TODO: real welding/fab job photos, AWS weld cert badge, NY inspection license #.
