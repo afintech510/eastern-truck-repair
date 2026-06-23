@@ -14,11 +14,20 @@ export default function GoogleAnalytics() {
   );
 }
 
-export function trackLeadConversion(formType: "contact" | "quote") {
+export function trackLeadConversion(formType: "contact" | "quote" | "chatbot") {
   if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
     (window as any).gtag("event", "generate_lead", {
       event_category: "lead",
       event_label: formType,
+    });
+  }
+}
+
+export function trackChatConversion(source: "web" | "sms") {
+  if (typeof window !== "undefined" && typeof (window as any).gtag === "function") {
+    (window as any).gtag("event", "chatbot_lead", {
+      event_category: "lead",
+      source,
     });
   }
 }

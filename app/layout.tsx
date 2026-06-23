@@ -7,6 +7,7 @@ import BenchworksCredit from "@/components/BenchworksCredit";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import JsonLd from "@/components/JsonLd";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import ChatWidget from "@/components/ChatWidget";
 import { business } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -68,6 +69,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Breadcrumbs />
           {children}
           <Footer />
+          <ChatWidget />
           <BenchworksCredit />
         </LangProvider>
       </body>

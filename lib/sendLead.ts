@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 // the /api/lead route contract and the form stay exactly as they are.
 
 export type LeadPayload = {
-  formType: "contact" | "quote";
+  formType: "contact" | "quote" | "chatbot" | "chatbot-sms";
   lang: "en" | "es";
   name: string;
   phone: string;

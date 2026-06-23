@@ -27,6 +27,9 @@ services:
       - TWILIO_AUTH=${TWILIO_AUTH:-}
       - TWILIO_FROM=${TWILIO_FROM:-}
       - SMS_TO=${SMS_TO:-}
+      # AI Chatbot (Claude API)
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - CHATBOT_MODEL=${CHATBOT_MODEL:-}
     ports:
       - "127.0.0.1:3010:3000"
     networks:
