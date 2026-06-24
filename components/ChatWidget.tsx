@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, FormEvent } from "react";
-import { MessageCircle, Send, Truck, Settings, Flame, ChevronRight } from "lucide-react";
+import { MessageCircle, Send, Truck, Settings, Flame, ChevronRight, X } from "lucide-react";
 import { useLang, T } from "./Lang";
 import { trackLeadConversion, trackChatConversion } from "./GoogleAnalytics";
 import { business } from "@/lib/data";
@@ -35,6 +35,8 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
   const [showBooking, setShowBooking] = useState(false);
   const [bookingName, setBookingName] = useState("");
   const [bookingPhone, setBookingPhone] = useState("");
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingSlot, setBookingSlot] = useState("");
   const [bookingStatus, setBookingStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [bubbleVisible, setBubbleVisible] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -57,6 +59,23 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
 
   function skipToFreeText() {
     setStep("symptom");
+  }
+
+  function editVehicleField(field: "type" | "year" | "make" | "model") {
+    if (field === "type") {
+      setStep("vehicle-type");
+    } else {
+      setStep("vehicle-details");
+    }
+  }
+
+  function clearVehicleField(field: "type" | "year" | "make" | "model") {
+    if (field === "type") {
+      setVehicleType(null);
+      setVehicle({});
+    } else {
+      setVehicle((v) => ({ ...v, [field]: undefined }));
+    }
   }
 
   function selectVehicleType(t: VehicleType) {
@@ -193,7 +212,7 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
           email: "",
           service: "",
           vehicle: vehicleInfo,
-          message: `[Chatbot appointment request]\n\nVehicle: ${vehicleInfo || "Not specified"}\n\nConversation:\n${conversationSummary}`,
+          message: `[Chatbot appointment request]\n\nVehicle: ${vehicleInfo || "Not specified"}${bookingDate ? `\nPreferred date: ${bookingDate}` : ""}${bookingSlot ? `\nPreferred time: ${bookingSlot}` : ""}\n\nConversation:\n${conversationSummary}`,
           company: "",
         }),
       });
@@ -367,8 +386,27 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
     </div>
   );
 
+  const timeSlots = [
+    { id: "7:00–9:30", en: "7:00 – 9:30 AM", es: "7:00 – 9:30 AM" },
+    { id: "9:30–12:00", en: "9:30 – 12:00 PM", es: "9:30 – 12:00 PM" },
+    { id: "12:00–2:30", en: "12:00 – 2:30 PM", es: "12:00 – 2:30 PM" },
+    { id: "2:30–5:00", en: "2:30 – 5:00 PM", es: "2:30 – 5:00 PM" },
+  ];
+
+  function getMinDate(): string {
+    const d = new Date();
+    if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+    else if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+    else if (d.getHours() >= 17) {
+      d.setDate(d.getDate() + 1);
+      if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+      else if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+    }
+    return d.toISOString().split("T")[0];
+  }
+
   const bookingForm = (
-    <form onSubmit={submitBooking} className="p-3 bg-steel rounded-lg border border-line mt-2 space-y-2">
+    <form onSubmit={submitBooking} className="p-3 bg-steel rounded-lg border border-line mt-2 space-y-3">
       <p className="text-xs text-zinc-300 font-medium">
         <T en="Enter your info and we'll call to confirm:" es="Ingresa tus datos y te llamamos para confirmar:" />
       </p>
@@ -388,6 +426,39 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
         required
         className="axle-inp w-full"
       />
+      <div>
+        <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wide disp font-bold">
+          <T en="Preferred Date" es="Fecha Preferida" />
+        </label>
+        <input
+          type="date"
+          value={bookingDate}
+          onChange={(e) => setBookingDate(e.target.value)}
+          min={getMinDate()}
+          className="axle-inp w-full"
+        />
+      </div>
+      <div>
+        <label className="block text-xs text-zinc-400 mb-1.5 uppercase tracking-wide disp font-bold">
+          <T en="Preferred Time" es="Hora Preferida" />
+        </label>
+        <div className="grid grid-cols-2 gap-1.5">
+          {timeSlots.map((slot) => (
+            <button
+              key={slot.id}
+              type="button"
+              onClick={() => setBookingSlot(slot.id)}
+              className={`px-2 py-2 rounded text-xs font-medium border transition ${
+                bookingSlot === slot.id
+                  ? "bg-[#39ff14]/20 border-[#39ff14] text-[#39ff14]"
+                  : "bg-steel2 border-line text-zinc-400 hover:border-[#39ff14]/50 hover:text-zinc-200"
+              }`}
+            >
+              {lang === "es" ? slot.es : slot.en}
+            </button>
+          ))}
+        </div>
+      </div>
       <button
         type="submit"
         disabled={bookingStatus === "sending"}
@@ -417,6 +488,53 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
     </div>
   );
 
+  const hasVehicleInfo = vehicleType || vehicle.year || vehicle.make || vehicle.model;
+
+  const vehicleBadges = hasVehicleInfo ? (
+    <div className="flex flex-wrap gap-1.5 px-4 py-2 bg-steel/50 border-b border-[#39ff14]/20 relative z-10">
+      {vehicleType && (
+        <button
+          onClick={() => editVehicleField("type")}
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30 hover:bg-[#39ff14]/20 transition group"
+        >
+          <Truck size={12} />
+          {vehicleType === "truck" ? (lang === "es" ? "Camión" : "Truck")
+            : vehicleType === "trailer" ? "Trailer"
+            : vehicleType === "equipment" ? (lang === "es" ? "Equipo" : "Equipment")
+            : (lang === "es" ? "Otro" : "Other")}
+          <X size={10} className="opacity-0 group-hover:opacity-100 transition" onClick={(e) => { e.stopPropagation(); clearVehicleField("type"); }} />
+        </button>
+      )}
+      {vehicle.year && (
+        <button
+          onClick={() => editVehicleField("year")}
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30 hover:bg-[#39ff14]/20 transition group"
+        >
+          {vehicle.year}
+          <X size={10} className="opacity-0 group-hover:opacity-100 transition" onClick={(e) => { e.stopPropagation(); clearVehicleField("year"); }} />
+        </button>
+      )}
+      {vehicle.make && (
+        <button
+          onClick={() => editVehicleField("make")}
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30 hover:bg-[#39ff14]/20 transition group"
+        >
+          {vehicle.make}
+          <X size={10} className="opacity-0 group-hover:opacity-100 transition" onClick={(e) => { e.stopPropagation(); clearVehicleField("make"); }} />
+        </button>
+      )}
+      {vehicle.model && (
+        <button
+          onClick={() => editVehicleField("model")}
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30 hover:bg-[#39ff14]/20 transition group"
+        >
+          {vehicle.model}
+          <X size={10} className="opacity-0 group-hover:opacity-100 transition" onClick={(e) => { e.stopPropagation(); clearVehicleField("model"); }} />
+        </button>
+      )}
+    </div>
+  ) : null;
+
   const chatPanel = (
     <div className="w-full rounded-lg border-2 border-[#39ff14] bg-steel2 overflow-hidden axle-glow relative">
       <div className="axle-scanlines" />
@@ -441,6 +559,9 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
           </div>
         </div>
       </div>
+
+      {/* Vehicle badges */}
+      {(step === "symptom" || step === "chat") && vehicleBadges}
 
       {/* Body */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto relative z-10" style={{ maxHeight: 420 }}>
