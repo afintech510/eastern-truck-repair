@@ -140,7 +140,7 @@ export async function chatWithBot(
   if (!apiKey) throw new Error("GEMINI_API_KEY not set");
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const modelId = process.env.CHATBOT_MODEL || "gemini-2.0-flash";
+  const modelId = process.env.CHATBOT_MODEL || "gemini-2.5-flash";
   const maxTokens = options?.sms ? 200 : 500;
 
   const model = genAI.getGenerativeModel({
