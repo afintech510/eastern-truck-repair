@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   if (!name || !phone) {
     return NextResponse.json({ ok: false, error: "name and phone are required" }, { status: 400 });
   }
-  if (formType !== "contact" && formType !== "quote") {
+  if (formType !== "contact" && formType !== "quote" && formType !== "chatbot" && formType !== "chatbot-sms") {
     return NextResponse.json({ ok: false, error: "invalid formType" }, { status: 400 });
   }
 
