@@ -51,6 +51,31 @@ export default function Home() {
 
       <Gallery />
 
+      {/* ===== AXLE AI CHAT SECTION ===== */}
+      <section id="axle-chat" className="border-y border-[#39ff14]/20 py-16 relative overflow-hidden" style={{ background: "linear-gradient(180deg,#10161d,#151d27)" }}>
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(57,255,20,0.015) 2px,rgba(57,255,20,0.015) 4px)" }} />
+        <div className="max-w-2xl mx-auto px-5 text-center relative z-10">
+          <div className="inline-flex items-center gap-2 mb-4">
+            <span className="px-3 py-1 text-xs font-bold tracking-widest text-[#39ff14] bg-[#39ff14]/10 border border-[#39ff14]/40 rounded-full disp" style={{ textShadow: "0 0 8px rgba(57,255,20,0.5)" }}>
+              AXLE AI
+            </span>
+          </div>
+          <h2 className="disp font-extrabold text-[clamp(28px,4.5vw,44px)] mb-3">
+            <T en={<>Got a Problem? <span className="text-[#39ff14]">Ask AXLE.</span></>}
+               es={<>¿Tienes un Problema? <span className="text-[#39ff14]">Pregúntale a AXLE.</span></>} />
+          </h2>
+          <p className="text-zinc-400 text-lg mb-8 max-w-xl mx-auto">
+            <T en="Describe your symptoms and Axle will help diagnose the issue and get you scheduled."
+               es="Describe tus síntomas y Axle te ayudará a diagnosticar el problema y agendar una cita." />
+          </p>
+          <ChatWidget inline />
+          <p className="mt-6 text-xs text-zinc-500">
+            <T en="Walk-ins welcome — during busy times there may be a wait to speak with a mechanic."
+               es="Visitas sin cita bienvenidas — en horas pico puede haber espera para hablar con un mecánico." />
+          </p>
+        </div>
+      </section>
+
       {/* ===== WELDING FEATURE BAND ===== */}
       <section className="border-y border-line relative overflow-hidden" style={{ background: "linear-gradient(135deg,#1a232e,#222d3a)" }}>
         <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-10" style={{ background: "repeating-linear-gradient(135deg,#ff7a00 0 18px,transparent 18px 36px)" }} />
@@ -77,25 +102,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* ===== INLINE CHAT SECTION ===== */}
-      <section className="border-y border-line py-16" style={{ background: "linear-gradient(180deg,#10161d,#151d27)" }}>
-        <div className="max-w-2xl mx-auto px-5 text-center">
-          <h2 className="disp font-extrabold text-[clamp(28px,4.5vw,44px)] mb-3">
-            <T en={<>Got a Problem? <span className="text-safety">Let&apos;s Talk.</span></>}
-               es={<>¿Tienes un Problema? <span className="text-safety">Hablemos.</span></>} />
-          </h2>
-          <p className="text-zinc-400 text-lg mb-8 max-w-xl mx-auto">
-            <T en="Describe your issue and our AI service advisor will help diagnose the problem and get you scheduled."
-               es="Describe tu problema y nuestro asesor de servicio con IA te ayudará a diagnosticarlo y agendar una cita." />
-          </p>
-          <ChatWidget inline />
-          <p className="mt-6 text-xs text-zinc-500">
-            <T en="Walk-ins welcome — during busy times there may be a wait to speak with a mechanic."
-               es="Visitas sin cita bienvenidas — en horas pico puede haber espera para hablar con un mecánico." />
-          </p>
         </div>
       </section>
 

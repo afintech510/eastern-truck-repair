@@ -1,5 +1,12 @@
-import Anthropic from "@anthropic-ai/sdk";
+import {
+  GoogleGenerativeAI,
+  SchemaType,
+  type Content,
+  type FunctionDeclarationsTool,
+  type Part,
+} from "@google/generative-ai";
 import { business, services } from "./data";
+import { sendLead, LeadConfigError } from "./sendLead";
 
 export type ChatMessage = {
   role: "user" | "assistant";
@@ -18,17 +25,42 @@ export type ChatOptions = {
   lang?: "en" | "es";
 };
 
+export type ChatResult = {
+  message: string;
+  leadCaptured?: boolean;
+};
+
 function buildServiceList(): string {
   return services
     .map((s) => `- ${s.en.name}: ${s.en.blurb}`)
     .join("\n");
 }
 
+const submitLeadTool: FunctionDeclarationsTool = {
+  functionDeclarations: [
+    {
+      name: "submit_lead",
+      description:
+        "Call when the customer provides name and phone to book an appointment or request a $29 mechanic call.",
+      parameters: {
+        type: SchemaType.OBJECT,
+        properties: {
+          customerName: { type: SchemaType.STRING, description: "Customer's name" },
+          phoneNumber: { type: SchemaType.STRING, description: "Customer's phone number" },
+          preferredTime: { type: SchemaType.STRING, description: "Preferred appointment time" },
+        },
+        required: ["customerName", "phoneNumber"],
+      },
+    },
+  ],
+};
+
 function buildSystemPrompt(
   vehicle?: VehicleContext,
   options?: ChatOptions,
+  extraContext?: string,
 ): string {
-  let prompt = `You are the virtual service advisor for ${business.name} in ${business.city}, ${business.state}.
+  let prompt = `You are the virtual service advisor for ${business.name} in ${business.city}, ${business.state}. Your name is Axle.
 
 IDENTITY:
 - Commercial truck, heavy equipment, and on-site welding shop
@@ -61,8 +93,10 @@ When a customer describes a symptom:
 5. Push toward booking: "Let's get a mechanic to take a look — want to schedule an appointment?"
 
 BOOKING:
-- To schedule, collect the customer's name and phone number.
-- Always offer the shop phone as a direct option: "Or call us at ${business.phone}"`;
+- When the customer is ready to book, ask for their name and phone number.
+- Once you have both, use the submit_lead tool to capture their information.
+- Always offer the shop phone as a direct option: "Or call us at ${business.phone}"
+- Also offer: "$29 phone consultation with a mechanic — we can set that up too."`;
 
   if (vehicle && (vehicle.type || vehicle.make || vehicle.model || vehicle.year)) {
     const parts = [vehicle.year, vehicle.make, vehicle.model, vehicle.type]
@@ -72,9 +106,12 @@ BOOKING:
     }
   }
 
+  if (extraContext) {
+    prompt += `\n\n${extraContext}`;
+  }
+
   if (options?.sms) {
-    prompt += `\n\nSMS MODE: Keep responses under 300 characters. Be concise but still helpful. Use abbreviations where natural.
-When the customer has provided their name and agreed to schedule an appointment (or you have enough info to capture a lead), include the exact marker [LEAD_CAPTURED] at the end of your response. Only include this marker ONCE per conversation. Do not explain the marker to the customer — it is an internal signal.`;
+    prompt += `\n\nSMS MODE: Keep responses under 300 characters. Be concise but still helpful. Use abbreviations where natural.`;
   }
 
   if (options?.lang === "es") {
@@ -86,28 +123,93 @@ When the customer has provided their name and agreed to schedule an appointment 
   return prompt;
 }
 
+function toGeminiHistory(messages: ChatMessage[]): Content[] {
+  return messages.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+}
+
 export async function chatWithBot(
   messages: ChatMessage[],
   vehicle?: VehicleContext,
   options?: ChatOptions,
-): Promise<string> {
-  const client = new Anthropic();
-  const model = process.env.CHATBOT_MODEL || "claude-sonnet-4-6";
+  extraContext?: string,
+): Promise<ChatResult> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY not set");
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const modelId = process.env.CHATBOT_MODEL || "gemini-2.0-flash";
   const maxTokens = options?.sms ? 200 : 500;
 
-  const response = await client.messages.create({
-    model,
-    max_tokens: maxTokens,
-    system: buildSystemPrompt(vehicle, options),
-    messages: messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-    })),
+  const model = genAI.getGenerativeModel({
+    model: modelId,
+    systemInstruction: buildSystemPrompt(vehicle, options, extraContext),
+    tools: options?.sms ? undefined : [submitLeadTool],
+    generationConfig: {
+      maxOutputTokens: maxTokens,
+    },
   });
 
-  const block = response.content[0];
-  if (block.type === "text") {
-    return block.text;
+  const history = toGeminiHistory(messages.slice(0, -1));
+  const lastMessage = messages[messages.length - 1];
+
+  const chat = model.startChat({ history });
+  let result = await chat.sendMessage(lastMessage.content);
+  let response = result.response;
+
+  let leadCaptured = false;
+
+  const functionCalls = response.functionCalls();
+  if (functionCalls && functionCalls.length > 0) {
+    const toolResponses: Part[] = [];
+
+    for (const call of functionCalls) {
+      if (call.name === "submit_lead") {
+        const args = call.args as {
+          customerName?: string;
+          phoneNumber?: string;
+          preferredTime?: string;
+        };
+
+        try {
+          await sendLead({
+            formType: options?.sms ? "chatbot-sms" : "chatbot",
+            lang: options?.lang || "en",
+            name: args.customerName || "Unknown",
+            phone: args.phoneNumber || "",
+            message: args.preferredTime
+              ? `Preferred time: ${args.preferredTime}`
+              : undefined,
+          });
+          leadCaptured = true;
+          toolResponses.push({
+            functionResponse: {
+              name: "submit_lead",
+              response: { success: true, message: "Appointment request submitted. The shop will call to confirm." },
+            },
+          });
+        } catch (err) {
+          const msg = err instanceof LeadConfigError
+            ? "Lead system not configured"
+            : "Failed to submit";
+          toolResponses.push({
+            functionResponse: {
+              name: "submit_lead",
+              response: { success: false, message: msg },
+            },
+          });
+        }
+      }
+    }
+
+    if (toolResponses.length > 0) {
+      result = await chat.sendMessage(toolResponses);
+      response = result.response;
+    }
   }
-  return "";
+
+  const text = response.text();
+  return { message: text || "", leadCaptured };
 }

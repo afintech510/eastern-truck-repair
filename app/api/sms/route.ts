@@ -145,16 +145,22 @@ export async function POST(req: Request) {
   conv.messages.push({ role: "user", content: body.trim() });
   conv.lastActivity = Date.now();
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.GEMINI_API_KEY) {
     return twiml(FALLBACK_REPLY);
   }
 
   try {
     const lang = detectLang(body);
-    let botResponse = await chatWithBot(conv.messages, undefined, {
+    const result = await chatWithBot(conv.messages, undefined, {
       sms: true,
       lang,
     });
+
+    let botResponse = result.message;
+
+    if (result.leadCaptured && !conv.leadCaptured) {
+      conv.leadCaptured = true;
+    }
 
     if (botResponse.includes(LEAD_MARKER) && !conv.leadCaptured) {
       conv.leadCaptured = true;

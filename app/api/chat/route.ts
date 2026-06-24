@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { chatWithBot, type ChatMessage, type VehicleContext } from "@/lib/chatbot";
+import { getVehicleRecalls, getVehicleComplaints } from "@/lib/nhtsa";
+import { findRelevantEntries } from "@/lib/diagnosticKB";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,13 +23,58 @@ function isRateLimited(ip: string): boolean {
   return entry.count > RATE_LIMIT;
 }
 
-// Periodically clean stale entries
 setInterval(() => {
   const now = Date.now();
   for (const [ip, entry] of rateLimiter) {
     if (now - entry.start > RATE_WINDOW) rateLimiter.delete(ip);
   }
 }, 5 * 60 * 1000);
+
+async function buildExtraContext(
+  vehicle: VehicleContext | undefined,
+  messages: ChatMessage[],
+): Promise<string> {
+  const parts: string[] = [];
+
+  if (vehicle?.make && vehicle?.model && vehicle?.year) {
+    const [recalls, complaints] = await Promise.all([
+      getVehicleRecalls(vehicle.make, vehicle.model, vehicle.year),
+      getVehicleComplaints(vehicle.make, vehicle.model, vehicle.year),
+    ]);
+
+    if (recalls.length > 0) {
+      parts.push(
+        "KNOWN RECALLS FOR THIS VEHICLE:\n" +
+          recalls.slice(0, 5).map((r) => `- ${r}`).join("\n"),
+      );
+    }
+
+    if (complaints.length > 0) {
+      parts.push(
+        "COMMON COMPLAINTS FOR THIS VEHICLE:\n" +
+          complaints.slice(0, 5).map((c) => `- ${c}`).join("\n"),
+      );
+    }
+  }
+
+  const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
+  if (lastUserMsg) {
+    const kbEntries = findRelevantEntries(lastUserMsg.content);
+    if (kbEntries.length > 0) {
+      parts.push(
+        "DIAGNOSTIC KNOWLEDGE (use to inform your response):\n" +
+          kbEntries
+            .map(
+              (e) =>
+                `- Symptom: "${e.symptom}" → Possible causes: ${e.causes.join(", ")} → Recommended: ${e.service} (Urgency: ${e.urgency})`,
+            )
+            .join("\n"),
+      );
+    }
+  }
+
+  return parts.join("\n\n");
+}
 
 export async function POST(request: Request) {
   const forwarded = request.headers.get("x-forwarded-for");
@@ -39,7 +86,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!process.env.GEMINI_API_KEY) {
     return NextResponse.json(
       { ok: false, error: "Chat not configured" },
       { status: 500 },
@@ -90,10 +137,15 @@ export async function POST(request: Request) {
   }
 
   try {
-    const message = await chatWithBot(body.messages, body.vehicle, {
+    const extraContext = await buildExtraContext(body.vehicle, body.messages);
+    const result = await chatWithBot(body.messages, body.vehicle, {
       lang: body.lang,
+    }, extraContext);
+    return NextResponse.json({
+      ok: true,
+      message: result.message,
+      leadCaptured: result.leadCaptured || false,
     });
-    return NextResponse.json({ ok: true, message });
   } catch (err) {
     console.error("Chat API error:", err);
     return NextResponse.json(
