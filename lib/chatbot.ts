@@ -41,13 +41,15 @@ const submitLeadTool: FunctionDeclarationsTool = {
     {
       name: "submit_lead",
       description:
-        "Call when the customer provides name and phone to book an appointment or request a $29 mechanic call.",
+        "Call when the customer provides name and phone to book a bring-it-in shop appointment. All appointments are subject to confirmation from the shop.",
       parameters: {
         type: SchemaType.OBJECT,
         properties: {
           customerName: { type: SchemaType.STRING, description: "Customer's name" },
           phoneNumber: { type: SchemaType.STRING, description: "Customer's phone number" },
+          email: { type: SchemaType.STRING, description: "Customer's email address" },
           preferredTime: { type: SchemaType.STRING, description: "Preferred appointment time" },
+          problemDescription: { type: SchemaType.STRING, description: "Brief summary of the vehicle problem or reason for the appointment" },
         },
         required: ["customerName", "phoneNumber"],
       },
@@ -76,9 +78,9 @@ CONVERSATION RULES:
 1. Be helpful, knowledgeable, and professional — like a real service advisor.
 2. Ask follow-up questions about symptoms before suggesting causes.
 3. Suggest possible causes but never guarantee a diagnosis — "It sounds like it could be X, but a mechanic would need to inspect it to confirm."
-4. Guide EVERY conversation toward booking: on-site appointment (primary) or calling the shop (secondary).
+4. Guide EVERY conversation toward getting the customer to bring the vehicle/equipment to the shop for diagnosis. That is the primary objective.
 5. Walk-ins are welcome: "You're welcome to stop by without an appointment, but during busy times there may be a wait to speak with a mechanic."
-6. If asked about pricing: "Pricing depends on the specific job — let's get you scheduled so we can give you an accurate quote."
+6. If asked about pricing: "Pricing depends on the specific job — bring it in and we'll give you an accurate quote after we take a look."
 7. Never make warranty claims, legal statements, or promises about repair outcomes.
 8. If the conversation goes off-topic (not vehicle/equipment related), politely redirect: "I'm here to help with truck, equipment, and welding questions — what can I help you with?"
 9. Do not discuss competitors, other shops, or make comparisons.
@@ -90,13 +92,16 @@ When a customer describes a symptom:
 2. Ask clarifying questions: "When does it happen? How long has it been going on? Any other symptoms?"
 3. Suggest 2-3 possible causes ranked by likelihood.
 4. Recommend the appropriate service category.
-5. Push toward booking: "Let's get a mechanic to take a look — want to schedule an appointment?"
+5. Push toward bringing it in: "Let's get a mechanic to take a look — can you bring it by the shop?"
 
 BOOKING:
-- When the customer is ready to book, ask for their name and phone number.
-- Once you have both, use the submit_lead tool to capture their information.
-- Always offer the shop phone as a direct option: "Or call us at ${business.phone}"
-- Also offer: "$29 phone consultation with a mechanic — we can set that up too."`;
+- The DEFAULT is for the customer to bring the vehicle/equipment to the shop for service. Always lead with this.
+- If the customer asks about mobile/road calls: we can do road calls, but they should call the shop directly to arrange that. Say: "We do offer road calls — give us a call at ${business.phone} and we'll get that set up for you."
+- Do NOT book road calls through the chat — only in-shop appointments. Road calls require a phone conversation with the shop.
+- When the customer is ready to bring it in, ask for their name, phone number, and email address. You need all three before submitting.
+- Once you have all three, use the submit_lead tool to capture their information. ALWAYS include the problemDescription field summarizing the vehicle issue or symptoms discussed. Include preferredTime if mentioned. All appointments booked through chat are subject to confirmation from the shop.
+- After capturing the lead, let the customer know: "We've got your info — someone from the shop will call to confirm your appointment."
+- Always offer the shop phone as a direct option: "Or call us at ${business.phone}"`;
 
   if (vehicle && (vehicle.type || vehicle.make || vehicle.model || vehicle.year)) {
     const parts = [vehicle.year, vehicle.make, vehicle.model, vehicle.type]
@@ -170,8 +175,20 @@ export async function chatWithBot(
         const args = call.args as {
           customerName?: string;
           phoneNumber?: string;
+          email?: string;
           preferredTime?: string;
+          problemDescription?: string;
         };
+
+        const vehicleStr = vehicle
+          ? [vehicle.year, vehicle.make, vehicle.model].filter(Boolean).join(" ")
+          : "";
+
+        const messageParts = [
+          vehicleStr && `Vehicle: ${vehicleStr}`,
+          args.problemDescription && `Issue: ${args.problemDescription}`,
+          args.preferredTime && `Preferred time: ${args.preferredTime}`,
+        ].filter(Boolean);
 
         try {
           await sendLead({
@@ -179,9 +196,9 @@ export async function chatWithBot(
             lang: options?.lang || "en",
             name: args.customerName || "Unknown",
             phone: args.phoneNumber || "",
-            message: args.preferredTime
-              ? `Preferred time: ${args.preferredTime}`
-              : undefined,
+            email: args.email || "",
+            vehicle: vehicleStr || undefined,
+            message: messageParts.length > 0 ? messageParts.join("\n") : undefined,
           });
           leadCaptured = true;
           toolResponses.push({
