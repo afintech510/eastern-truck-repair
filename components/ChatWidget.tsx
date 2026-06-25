@@ -51,9 +51,12 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
   const [bookingDate, setBookingDate] = useState("");
   const [bookingSlot, setBookingSlot] = useState("");
   const [bookingConsent, setBookingConsent] = useState(false);
+  const [bookingProblem, setBookingProblem] = useState("");
   const [bookingStatus, setBookingStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [bubbleVisible, setBubbleVisible] = useState(true);
+  const [axleOffline, setAxleOffline] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bookingRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (inline) return;
@@ -139,32 +142,31 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
           trackChatConversion("web");
         }
       } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content:
-              lang === "es"
-                ? `Lo siento, no pude procesar tu mensaje. Por favor llama al ${business.phone}.`
-                : `Sorry, I couldn't process that. Please call us at ${business.phone}.`,
-          },
-        ]);
+        showAxleOnBreak();
       }
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            lang === "es"
-              ? `Lo siento, el chat no está disponible. Por favor llama al ${business.phone}.`
-              : `Sorry, chat is temporarily unavailable. Please call us at ${business.phone}.`,
-        },
-      ]);
+      showAxleOnBreak();
     } finally {
       clearTimeout(timeout);
       setLoading(false);
     }
+  }
+
+  function showAxleOnBreak() {
+    setAxleOffline(true);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        content:
+          lang === "es"
+            ? "Axle está en descanso — todavía está en desarrollo. Pero puedo ayudarte a agendar una cita. Completa el formulario abajo con tu información y te contactaremos."
+            : "Axle is taking a break — he's still under development. But I can still help you schedule an appointment! Fill out the form below with your info and we'll get back to you.",
+      },
+    ]);
+    setTimeout(() => {
+      bookingRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 300);
   }
 
   function submitSymptom(e: FormEvent) {
@@ -211,7 +213,7 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
           email: "",
           service: "",
           vehicle: vehicleInfo,
-          message: `[Chatbot appointment request]\n\nVehicle: ${vehicleInfo || "Not specified"}${bookingDate ? `\nPreferred date: ${bookingDate}` : ""}${bookingSlot ? `\nPreferred time: ${bookingSlot}` : ""}\n\nConversation:\n${conversationSummary}`,
+          message: `[Chatbot appointment request]\n\nVehicle: ${vehicleInfo || "Not specified"}${bookingProblem ? `\nProblem: ${bookingProblem}` : ""}${bookingDate ? `\nPreferred date: ${bookingDate}` : ""}${bookingSlot ? `\nPreferred time: ${bookingSlot}` : ""}${conversationSummary ? `\n\nConversation:\n${conversationSummary}` : ""}`,
           company: "",
         }),
       });
@@ -511,8 +513,9 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
   );
 
   // --- Booking form (below chat panel) ---
-  const bookingSection = (step === "chat" || step === "symptom") && bookingStatus !== "done" ? (
-    <form onSubmit={submitBooking} className="mt-4 p-4 rounded-lg border border-line bg-steel space-y-3">
+  const showBookingForm = (step === "chat" || step === "symptom" || axleOffline) && bookingStatus !== "done";
+  const bookingSection = showBookingForm ? (
+    <form ref={bookingRef} onSubmit={submitBooking} className={`mt-4 p-4 rounded-lg border bg-steel space-y-3 ${axleOffline ? "border-safety" : "border-line"}`}>
       <h4 className="disp font-bold text-sm text-zinc-100">
         <T en="Schedule an Appointment" es="Agendar una Cita" />
       </h4>
@@ -543,6 +546,17 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
             className="axle-inp w-full"
           />
         </div>
+      </div>
+      <div>
+        <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wide disp font-bold">
+          <T en="Problem Description" es="Descripción del Problema" />
+        </label>
+        <textarea
+          value={bookingProblem}
+          onChange={(e) => setBookingProblem(e.target.value)}
+          placeholder={lang === "es" ? "Describa el problema brevemente..." : "Briefly describe the issue..."}
+          className="axle-inp w-full min-h-[60px]"
+        />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
