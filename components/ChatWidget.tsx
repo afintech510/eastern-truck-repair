@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef, useEffect, FormEvent } from "react";
-import { MessageCircle, Send, Truck, Settings, Flame, ChevronRight, X } from "lucide-react";
+import { MessageCircle, Send, Truck, Settings, Flame, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLang, T } from "./Lang";
 import { trackLeadConversion, trackChatConversion } from "./GoogleAnalytics";
 import { business } from "@/lib/data";
@@ -9,6 +9,20 @@ import type { ChatMessage, VehicleContext } from "@/lib/chatbot";
 
 type IntakeStep = "vehicle-type" | "vehicle-details" | "symptom" | "chat";
 type VehicleType = "truck" | "trailer" | "equipment" | "other";
+
+const VEHICLE_EMOJI: Record<VehicleType, string> = {
+  truck: "\u{1F69B}",
+  trailer: "\u{1F69A}",
+  equipment: "\u{1F3D7}️",
+  other: "\u{1F527}",
+};
+
+const VEHICLE_LABELS: Record<VehicleType, { en: string; es: string }> = {
+  truck: { en: "Truck", es: "Camión" },
+  trailer: { en: "Trailer", es: "Trailer" },
+  equipment: { en: "Equipment", es: "Equipo" },
+  other: { en: "Other", es: "Otro" },
+};
 
 function getMakesForType(type: VehicleType): string[] {
   switch (type) {
@@ -32,11 +46,11 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showBooking, setShowBooking] = useState(false);
   const [bookingName, setBookingName] = useState("");
   const [bookingPhone, setBookingPhone] = useState("");
   const [bookingDate, setBookingDate] = useState("");
   const [bookingSlot, setBookingSlot] = useState("");
+  const [bookingConsent, setBookingConsent] = useState(false);
   const [bookingStatus, setBookingStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [bubbleVisible, setBubbleVisible] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -61,21 +75,10 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
     setStep("symptom");
   }
 
-  function editVehicleField(field: "type" | "year" | "make" | "model") {
-    if (field === "type") {
-      setStep("vehicle-type");
-    } else {
-      setStep("vehicle-details");
-    }
-  }
-
-  function clearVehicleField(field: "type" | "year" | "make" | "model") {
-    if (field === "type") {
-      setVehicleType(null);
-      setVehicle({});
-    } else {
-      setVehicle((v) => ({ ...v, [field]: undefined }));
-    }
+  function resetVehicle() {
+    setVehicleType(null);
+    setVehicle({});
+    setStep("vehicle-type");
   }
 
   function selectVehicleType(t: VehicleType) {
@@ -185,13 +188,9 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
     sendMessage(input.trim());
   }
 
-  function handleBookAppointment() {
-    setShowBooking(true);
-  }
-
   async function submitBooking(e: FormEvent) {
     e.preventDefault();
-    if (!bookingName.trim() || !bookingPhone.trim()) return;
+    if (!bookingName.trim() || !bookingPhone.trim() || !bookingConsent) return;
     setBookingStatus("sending");
 
     const conversationSummary = messages
@@ -221,7 +220,6 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
       trackLeadConversion("chatbot");
       trackChatConversion("web");
       setBookingStatus("done");
-      setShowBooking(false);
       setMessages((prev) => [
         ...prev,
         {
@@ -244,6 +242,17 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
     } else {
       window.location.href = "/#axle-chat";
     }
+  }
+
+  // --- Build vehicle badge text ---
+  function vehicleBadgeText(): string {
+    const parts: string[] = [];
+    if (vehicle.year) parts.push(vehicle.year);
+    if (vehicle.make) parts.push(vehicle.make);
+    if (vehicle.model) parts.push(vehicle.model);
+    if (parts.length > 0) return parts.join(" ");
+    if (vehicleType) return lang === "es" ? VEHICLE_LABELS[vehicleType].es : VEHICLE_LABELS[vehicleType].en;
+    return "";
   }
 
   // --- Render pieces ---
@@ -283,9 +292,14 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
 
   const vehicleDetailsForm = (
     <form onSubmit={submitDetails} className="p-4 space-y-3">
-      <p className="text-zinc-200 text-sm mb-1">
-        <T en="Tell us about your vehicle" es="Cuéntanos sobre tu vehículo" />
-      </p>
+      <div className="flex items-center gap-2 mb-1">
+        <button type="button" onClick={() => setStep("vehicle-type")} className="text-zinc-400 hover:text-[#39ff14] transition">
+          <ChevronLeft size={18} />
+        </button>
+        <p className="text-zinc-200 text-sm">
+          <T en="Tell us about your vehicle" es="Cuéntanos sobre tu vehículo" />
+        </p>
+      </div>
       <div>
         <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wide disp font-bold">
           <T en="Year" es="Año" />
@@ -363,29 +377,32 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
     </div>
   );
 
-  const ctaButtons = (
-    <div className="flex flex-col gap-2 mt-2">
-      <button
-        onClick={handleBookAppointment}
-        className="w-full bg-safety hover:bg-safety-d text-steel py-2.5 rounded disp font-bold text-sm transition"
-      >
-        <T en="Schedule Appointment" es="Agendar Cita" />
-      </button>
-      <a
-        href={business.phoneHref}
-        className="w-full border border-safety text-safety hover:bg-safety/10 py-2.5 rounded disp font-bold text-sm text-center transition block"
-      >
-        <T en={`Call ${business.phone}`} es={`Llamar ${business.phone}`} />
-      </a>
-      <button
-        onClick={handleBookAppointment}
-        className="text-xs text-zinc-400 hover:text-safety transition"
-      >
-        <T en="$29 Phone Consultation" es="Consulta Telefónica $29" />
-      </button>
+  const walkinNote = (
+    <div className="mx-4 mb-2 px-3 py-2 rounded bg-steel border border-line text-xs text-zinc-400">
+      <T
+        en="Walk-ins welcome — during busy times there may be a wait to speak with a mechanic"
+        es="Se aceptan visitas sin cita — en horarios ocupados puede haber espera para hablar con un mecánico"
+      />
     </div>
   );
 
+  const badgeText = vehicleBadgeText();
+  const vehicleBadge = badgeText && (step === "symptom" || step === "chat") ? (
+    <div className="px-4 py-2 bg-steel/50 border-b border-[#39ff14]/20 relative z-10">
+      <button
+        onClick={resetVehicle}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30 hover:bg-[#39ff14]/20 transition"
+      >
+        <span>{vehicleType ? VEHICLE_EMOJI[vehicleType] : "\u{1F697}"}</span>
+        <span>{badgeText}</span>
+        <span className="text-[10px] text-[#39ff14]/60 ml-0.5">
+          <T en="change" es="cambiar" />
+        </span>
+      </button>
+    </div>
+  ) : null;
+
+  // --- Time slots ---
   const timeSlots = [
     { id: "7:00–9:30", en: "7:00 – 9:30 AM", es: "7:00 – 9:30 AM" },
     { id: "9:30–12:00", en: "9:30 – 12:00 PM", es: "9:30 – 12:00 PM" },
@@ -404,136 +421,6 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
     }
     return d.toISOString().split("T")[0];
   }
-
-  const bookingForm = (
-    <form onSubmit={submitBooking} className="p-3 bg-steel rounded-lg border border-line mt-2 space-y-3">
-      <p className="text-xs text-zinc-300 font-medium">
-        <T en="Enter your info and we'll call to confirm:" es="Ingresa tus datos y te llamamos para confirmar:" />
-      </p>
-      <input
-        type="text"
-        value={bookingName}
-        onChange={(e) => setBookingName(e.target.value)}
-        placeholder={lang === "es" ? "Nombre" : "Name"}
-        required
-        className="axle-inp w-full"
-      />
-      <input
-        type="tel"
-        value={bookingPhone}
-        onChange={(e) => setBookingPhone(e.target.value)}
-        placeholder={lang === "es" ? "Teléfono" : "Phone"}
-        required
-        className="axle-inp w-full"
-      />
-      <div>
-        <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wide disp font-bold">
-          <T en="Preferred Date" es="Fecha Preferida" />
-        </label>
-        <input
-          type="date"
-          value={bookingDate}
-          onChange={(e) => setBookingDate(e.target.value)}
-          min={getMinDate()}
-          className="axle-inp w-full"
-        />
-      </div>
-      <div>
-        <label className="block text-xs text-zinc-400 mb-1.5 uppercase tracking-wide disp font-bold">
-          <T en="Preferred Time" es="Hora Preferida" />
-        </label>
-        <div className="grid grid-cols-2 gap-1.5">
-          {timeSlots.map((slot) => (
-            <button
-              key={slot.id}
-              type="button"
-              onClick={() => setBookingSlot(slot.id)}
-              className={`px-2 py-2 rounded text-xs font-medium border transition ${
-                bookingSlot === slot.id
-                  ? "bg-[#39ff14]/20 border-[#39ff14] text-[#39ff14]"
-                  : "bg-steel2 border-line text-zinc-400 hover:border-[#39ff14]/50 hover:text-zinc-200"
-              }`}
-            >
-              {lang === "es" ? slot.es : slot.en}
-            </button>
-          ))}
-        </div>
-      </div>
-      <button
-        type="submit"
-        disabled={bookingStatus === "sending"}
-        className="w-full bg-safety hover:bg-safety-d text-steel py-2 rounded disp font-bold text-sm disabled:opacity-60 transition"
-      >
-        {bookingStatus === "sending"
-          ? lang === "es" ? "Enviando…" : "Sending…"
-          : lang === "es" ? "Enviar" : "Submit"}
-      </button>
-      {bookingStatus === "error" && (
-        <p className="text-xs text-red-400">
-          <T
-            en={<>Couldn&apos;t submit. Call us at <a href={business.phoneHref} className="underline">{business.phone}</a>.</>}
-            es={<>No se pudo enviar. Llámanos al <a href={business.phoneHref} className="underline">{business.phone}</a>.</>}
-          />
-        </p>
-      )}
-    </form>
-  );
-
-  const walkinNote = (
-    <div className="mx-4 mb-2 px-3 py-2 rounded bg-steel border border-line text-xs text-zinc-400">
-      <T
-        en="Walk-ins welcome — during busy times there may be a wait to speak with a mechanic"
-        es="Se aceptan visitas sin cita — en horarios ocupados puede haber espera para hablar con un mecánico"
-      />
-    </div>
-  );
-
-  const hasVehicleInfo = vehicleType || vehicle.year || vehicle.make || vehicle.model;
-
-  const vehicleBadges = hasVehicleInfo ? (
-    <div className="flex flex-wrap gap-1.5 px-4 py-2 bg-steel/50 border-b border-[#39ff14]/20 relative z-10">
-      {vehicleType && (
-        <button
-          onClick={() => editVehicleField("type")}
-          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30 hover:bg-[#39ff14]/20 transition group"
-        >
-          <Truck size={12} />
-          {vehicleType === "truck" ? (lang === "es" ? "Camión" : "Truck")
-            : vehicleType === "trailer" ? "Trailer"
-            : vehicleType === "equipment" ? (lang === "es" ? "Equipo" : "Equipment")
-            : (lang === "es" ? "Otro" : "Other")}
-          <X size={10} className="opacity-0 group-hover:opacity-100 transition" onClick={(e) => { e.stopPropagation(); clearVehicleField("type"); }} />
-        </button>
-      )}
-      {vehicle.year && (
-        <button
-          onClick={() => editVehicleField("year")}
-          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30 hover:bg-[#39ff14]/20 transition group"
-        >
-          {vehicle.year}
-          <X size={10} className="opacity-0 group-hover:opacity-100 transition" onClick={(e) => { e.stopPropagation(); clearVehicleField("year"); }} />
-        </button>
-      )}
-      {vehicle.make && (
-        <button
-          onClick={() => editVehicleField("make")}
-          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30 hover:bg-[#39ff14]/20 transition group"
-        >
-          {vehicle.make}
-          <X size={10} className="opacity-0 group-hover:opacity-100 transition" onClick={(e) => { e.stopPropagation(); clearVehicleField("make"); }} />
-        </button>
-      )}
-      {vehicle.model && (
-        <button
-          onClick={() => editVehicleField("model")}
-          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30 hover:bg-[#39ff14]/20 transition group"
-        >
-          {vehicle.model}
-          <X size={10} className="opacity-0 group-hover:opacity-100 transition" onClick={(e) => { e.stopPropagation(); clearVehicleField("model"); }} />
-        </button>
-      )}
-    </div>
-  ) : null;
 
   const chatPanel = (
     <div className="w-full rounded-lg border-2 border-[#39ff14] bg-steel2 overflow-hidden axle-glow relative">
@@ -560,8 +447,8 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
         </div>
       </div>
 
-      {/* Vehicle badges */}
-      {(step === "symptom" || step === "chat") && vehicleBadges}
+      {/* Vehicle badge */}
+      {vehicleBadge}
 
       {/* Body */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto relative z-10" style={{ maxHeight: 420 }}>
@@ -584,8 +471,6 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
               </div>
             ))}
             {loading && typingIndicator}
-            {messages.length > 0 && messages[messages.length - 1].role === "assistant" && !loading && !showBooking && ctaButtons}
-            {showBooking && bookingStatus !== "done" && bookingForm}
           </div>
         )}
       </div>
@@ -625,8 +510,135 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
     </div>
   );
 
-  // Inline mode: render the full chat interface directly
-  if (inline) return chatPanel;
+  // --- Booking form (below chat panel) ---
+  const bookingSection = (step === "chat" || step === "symptom") && bookingStatus !== "done" ? (
+    <form onSubmit={submitBooking} className="mt-4 p-4 rounded-lg border border-line bg-steel space-y-3">
+      <h4 className="disp font-bold text-sm text-zinc-100">
+        <T en="Schedule an Appointment" es="Agendar una Cita" />
+      </h4>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wide disp font-bold">
+            <T en="Name" es="Nombre" />
+          </label>
+          <input
+            type="text"
+            value={bookingName}
+            onChange={(e) => setBookingName(e.target.value)}
+            placeholder={lang === "es" ? "Tu nombre" : "Your name"}
+            required
+            className="axle-inp w-full"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wide disp font-bold">
+            <T en="Phone" es="Teléfono" />
+          </label>
+          <input
+            type="tel"
+            value={bookingPhone}
+            onChange={(e) => setBookingPhone(e.target.value)}
+            placeholder={lang === "es" ? "Tu teléfono" : "Your phone number"}
+            required
+            className="axle-inp w-full"
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs text-zinc-400 mb-1 uppercase tracking-wide disp font-bold">
+            <T en="Preferred Date" es="Fecha Preferida" />
+          </label>
+          <input
+            type="date"
+            value={bookingDate}
+            onChange={(e) => setBookingDate(e.target.value)}
+            min={getMinDate()}
+            className="axle-inp w-full"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-zinc-400 mb-1.5 uppercase tracking-wide disp font-bold">
+            <T en="Preferred Time" es="Hora Preferida" />
+          </label>
+          <div className="grid grid-cols-2 gap-1.5">
+            {timeSlots.map((slot) => (
+              <button
+                key={slot.id}
+                type="button"
+                onClick={() => setBookingSlot(slot.id)}
+                className={`px-2 py-2 rounded text-xs font-medium border transition ${
+                  bookingSlot === slot.id
+                    ? "bg-[#39ff14]/20 border-[#39ff14] text-[#39ff14]"
+                    : "bg-steel2 border-line text-zinc-400 hover:border-[#39ff14]/50 hover:text-zinc-200"
+                }`}
+              >
+                {lang === "es" ? slot.es : slot.en}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <label className="flex items-start gap-2 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={bookingConsent}
+          onChange={(e) => setBookingConsent(e.target.checked)}
+          className="mt-0.5 accent-[#39ff14]"
+        />
+        <span className="text-xs text-zinc-400 leading-tight">
+          <T
+            en="I consent to being contacted by Eastern Truck & Equipment Repair & Welding via phone or text regarding my appointment request."
+            es="Doy mi consentimiento para que Eastern Truck & Equipment Repair & Welding me contacte por teléfono o mensaje de texto sobre mi solicitud de cita."
+          />
+        </span>
+      </label>
+      <button
+        type="submit"
+        disabled={bookingStatus === "sending" || !bookingConsent || !bookingName.trim() || !bookingPhone.trim()}
+        className="w-full bg-safety hover:bg-safety-d text-steel py-2.5 rounded disp font-bold text-sm disabled:opacity-40 transition"
+      >
+        {bookingStatus === "sending"
+          ? lang === "es" ? "Enviando…" : "Sending…"
+          : lang === "es" ? "Solicitar Cita" : "Request Appointment"}
+      </button>
+      {bookingStatus === "error" && (
+        <p className="text-xs text-red-400">
+          <T
+            en={<>Couldn&apos;t submit. Call us at <a href={business.phoneHref} className="underline">{business.phone}</a>.</>}
+            es={<>No se pudo enviar. Llámanos al <a href={business.phoneHref} className="underline">{business.phone}</a>.</>}
+          />
+        </p>
+      )}
+      <div className="flex items-center gap-3 pt-1">
+        <a
+          href={business.phoneHref}
+          className="text-xs text-safety hover:underline"
+        >
+          <T en={`Or call ${business.phone}`} es={`O llama al ${business.phone}`} />
+        </a>
+      </div>
+    </form>
+  ) : bookingStatus === "done" ? (
+    <div className="mt-4 p-4 rounded-lg border border-[#39ff14]/30 bg-steel text-center">
+      <p className="text-sm text-[#39ff14] disp font-bold">
+        <T en="Appointment request sent!" es="¡Solicitud de cita enviada!" />
+      </p>
+      <p className="text-xs text-zinc-400 mt-1">
+        <T en="We'll call you to confirm." es="Te llamaremos para confirmar." />
+      </p>
+    </div>
+  ) : null;
+
+  // Inline mode: render chat panel + booking form below it
+  if (inline) {
+    return (
+      <div>
+        {chatPanel}
+        {bookingSection}
+      </div>
+    );
+  }
 
   // Bubble mode: scroll to inline section when clicked
   if (!bubbleVisible) return null;
