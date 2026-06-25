@@ -6,7 +6,7 @@ export const business = {
   address: "91 N Phillips Ave",
   city: "Speonk", state: "NY", zip: "11972",
   region: "Eastern Long Island",
-  hours: { en: "Mon-Fri 7AM-5PM", es: "Lun-Vie 7AM-5PM" },
+  hours: { en: "Mon-Fri 7AM-6PM, Sat 8AM-2PM", es: "Lun-Vie 7AM-6PM, Sáb 8AM-2PM" },
 };
 
 export type Service = {

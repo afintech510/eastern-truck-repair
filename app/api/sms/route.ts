@@ -6,7 +6,7 @@ import { business } from "@/lib/data";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const FALLBACK_REPLY = `Thanks for reaching out! Please call us at ${business.phone} or visit easterntruckrepair.com. We're open Mon-Fri 7AM-5PM.`;
+const FALLBACK_REPLY = `Thanks for reaching out! Please call us at ${business.phone} or visit easterntruckrepair.com. We're open Mon-Fri 7AM-6PM, Sat 8AM-2PM.`;
 
 const LEAD_MARKER = "[LEAD_CAPTURED]";
 

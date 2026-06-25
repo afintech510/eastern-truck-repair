@@ -414,12 +414,13 @@ export default function ChatWidget({ inline }: { inline?: boolean }) {
 
   function getMinDate(): string {
     const d = new Date();
-    if (d.getDay() === 0) d.setDate(d.getDate() + 1);
-    else if (d.getDay() === 6) d.setDate(d.getDate() + 2);
-    else if (d.getHours() >= 17) {
+    const day = d.getDay();
+    const hour = d.getHours();
+    if (day === 0) d.setDate(d.getDate() + 1);
+    else if (day === 6 && hour >= 14) d.setDate(d.getDate() + 2);
+    else if (day >= 1 && day <= 5 && hour >= 18) {
       d.setDate(d.getDate() + 1);
       if (d.getDay() === 0) d.setDate(d.getDate() + 1);
-      else if (d.getDay() === 6) d.setDate(d.getDate() + 2);
     }
     return d.toISOString().split("T")[0];
   }
