@@ -22,13 +22,16 @@ export default function BenchworksCredit() {
         <span className="hidden md:inline text-zinc-700">·</span>
         <span className="text-zinc-500">
           <T
-            en="Custom platforms. AI tool coaching that multiplies your team's time."
-            es="Plataformas a medida. Coaching de IA que multiplica el tiempo de tu equipo."
+            en="Multiply your team's time with AI. Let us show you how."
+            es="Multiplica el tiempo de tu equipo con IA. Déjanos mostrarte cómo."
           />
         </span>
         <span className="hidden md:inline text-zinc-700">·</span>
         <span className="tracking-wide text-zinc-500">
-          <T en="Advise · Build · Train · Manage" es="Asesorar · Construir · Capacitar · Gestionar" />
+          <T
+            en="Office Automation · High Conversion Websites · AI Coaching · Fractional CTO"
+            es="Automatización · Sitios Web de Alta Conversión · Coaching de IA · CTO Fraccionado"
+          />
         </span>
         <span className="hidden md:inline text-zinc-700">·</span>
         <span className="text-safety/90 group-hover:text-safety">benchworksai.com</span>
