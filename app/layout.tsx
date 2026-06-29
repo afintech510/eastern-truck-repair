@@ -13,7 +13,7 @@ import { business } from "@/lib/data";
 export const metadata: Metadata = {
   metadataBase: new URL("https://easterntruckrepair.com"),
   title: {
-    default: `${business.name} | Commercial Truck Repair & On-Site Welding | ${business.region}`,
+    default: `${business.name} | ${business.city}, ${business.state}`,
     template: `%s | ${business.shortName}`,
   },
   description: `Heavy-duty commercial truck repair, heavy equipment service, on-site welding & fabrication, and NY State inspections across ${business.region}. Serving Speonk, Riverhead, Hampton Bays, Patchogue & surrounding towns. Call ${business.phone}.`,
